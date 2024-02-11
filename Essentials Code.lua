@@ -1,3 +1,4 @@
+wait(1)
 script = nil
 local Player = game:GetService('Players').LocalPlayer
 
@@ -24,6 +25,7 @@ repeat
 until Gui
 
 local Workspace = game:GetService('Workspace')
+local Settings = require(game.ReplicatedStorage["ExtraSettings"])
 local Lighting = game:GetService('Lighting')
 local Players = game:GetService('Players')
 local replicatedFirst = game:GetService('ReplicatedFirst')
@@ -44,6 +46,7 @@ local Debris = game:GetService('Debris')
 local chatService = game:GetService('Chat')
 local httpService = game:GetService('HttpService')
 local tweenService = game:GetService('TweenService')
+
 
 local essentialsFolder = replicatedStorage:WaitForChild('Basic Admin Essentials')
 local essentialsEvent = essentialsFolder:WaitForChild('Essentials Event')
@@ -1323,7 +1326,7 @@ local function Display(Type,Data)
 		local hatBox = hatFrame.Frame:WaitForChild('Hat')	
 
 		local faceFrame = donorScroll:WaitForChild('Face')
-		local faceApply = faceFrame:WaitForChild('TextButton')
+		local faceApply = faceFrame:WaitForChild('Apply')
 		local faceBox = faceFrame.Frame:WaitForChild('Face')
 
 		table.insert(Connections,faceBox.FocusLost:connect(function()
@@ -1344,54 +1347,13 @@ local function Display(Type,Data)
 
 		-- hatClear
 		table.insert(Connections,hatClear.MouseButton1Click:connect(function()
-			if not clientConfig.Debounces.ClearHats then
-				clientConfig.Debounces.ClearHats = true
-				hatClear.Text = "Removing.."
-				local Result,Data = invokeServer('Remove Hats')
-				if Result then
-					hatClear.Text = "Removed!"
-					wait(1)
-					hatClear.Text = "Remove Hats"
-				else
-					hatClear.Text = Data or "Error"
-					wait(1)
-					hatClear.Text = "Remove Hats"
-				end
-				wait(1)
-				clientConfig.Debounces.ClearHats = false
-			end
+			local PLR = game.Workspace:FindFirstChild(Players.LocalPlayer.Name)
+			PLR.Head.Transparency = 0
+			PLR.Head.face.Transparency = 0
 		end))
 
 		table.insert(Connections,faceApply.MouseButton1Click:connect(function()
-			if not clientConfig.Debounces.Face then
-				clientConfig.Debounces.Face = true
-				repeat
-					faceApply.Text = "Applying.."
-					if userInput:GetFocusedTextBox() or donorClone.Parent == nil then
-						break
-					end
-					wait()
-				until not userInput:GetFocusedTextBox() and not clientConfig.Debounces.faceLoading
-				if clientConfig.faceData then
-					local Result,Data = invokeServer('Face',clientConfig.faceData)
-					clientConfig.faceData = nil
-					if Result then
-						faceApply.Text = "Applied"
-						wait(1)
-						faceApply.Text = "Apply"
-					else
-						faceApply.Text = Data or "Error"
-						wait(1)
-						faceApply.Text = "Apply"
-					end
-					faceBox.Text = "Face Id..."
-				else
-					faceApply.Text = "Enter an Id."
-					wait(1)
-				end
-				clientConfig.Debounces.Face = false
-				faceApply.Text = "Apply"
-			end
+			game.ReplicatedStorage.DonorEvent:FireServer(game.Players.LocalPlayer.Name)
 		end))
 
 		table.insert(Connections,hatBox.FocusLost:connect(function()
@@ -1411,35 +1373,9 @@ local function Display(Type,Data)
 		end))
 
 		table.insert(Connections,hatApply.MouseButton1Click:connect(function()
-			if not clientConfig.Debounces.Hat then
-				clientConfig.Debounces.Hat = true
-				repeat
-					hatApply.Text = "Applying.."
-					if userInput:GetFocusedTextBox() or donorTemplate.Parent == nil then
-						break
-					end
-					wait()
-				until not userInput:GetFocusedTextBox() and not clientConfig.Debounces.hatLoading
-				if clientConfig.hatData then
-					local Result,Data = invokeServer('Hat',clientConfig.hatData)
-					clientConfig.hatData = nil
-					if Result then
-						hatApply.Text = "Applied!"
-						wait(1)
-						hatApply.Text = "Apply"
-					elseif not Result then
-						hatApply.Text = Data or "Error"
-						wait(1)
-						hatApply.Text = "Apply"
-					end
-					hatBox.Text = "Hat Id.."
-				else
-					hatApply.Text = "Enter an Id."
-					wait(1)
-				end
-				clientConfig.Debounces.Hat = false
-				hatApply.Text = "Apply"
-			end
+			local PLR = game.Workspace:FindFirstChild(Players.LocalPlayer.Name)
+			PLR.Head.Transparency = 1
+			PLR.Head.face.Transparency = 1
 		end))
 
 		donorClone.Position = UDim2.new(0,-donorClone.Size.X.Offset-5,0.5,-150)
@@ -2499,7 +2435,7 @@ local function Console()
 		end
 	end)
 end
-
+local settings = require(game.ReplicatedStorage.ExtraSettings)
 userInput.InputBegan:connect(function(Input,Processed)
 	local inABox = userInput:GetFocusedTextBox()
 	if inABox then return end
@@ -2507,8 +2443,10 @@ userInput.InputBegan:connect(function(Input,Processed)
 		if Input.UserInputType == Enum.UserInputType.Keyboard then
 			local keyPressed = Input.KeyCode
 			if keyPressed == Enum.KeyCode.Quote then
-				if clientConfig.Key and clientConfig.Permission and clientConfig.Permission >= 1 then
+				if clientConfig.Key and clientConfig.Permission and clientConfig.Permission >= 1 and Settings.CommandBarRestrictionEnabled == false then
 					Console()
+				else
+					pendNotif("Error","Console Is Disabled","Console")
 				end
 			elseif keyPressed == Enum.KeyCode.E then
 				if clientConfig.Flying then
@@ -2562,6 +2500,7 @@ local function commandConfirmation(Command,Argument)
 	return toReturn
 end
 
+
 function essentialsFunction.OnClientInvoke(Starter,...)
 	local Data = {...}
 	if Starter == "Command Confirmation" then
@@ -2579,19 +2518,20 @@ function essentialsFunction.OnClientInvoke(Starter,...)
 			for a,b in next,Data[1] do
 				clientConfig[a] = b
 			end
-
+			local Settings = require(game.ReplicatedStorage.ExtraSettings)
 			testService:Message("Basic Admin Remade 2.0 | "..clientConfig.Version.." | Prefix: \""..clientConfig.Prefix.."\" | Act. Prefix: \""..clientConfig.actionPrefix.."\"")
 			local adminTitle
-			local Settings = require(game.ServerScriptService["Basic Admin Remade"]["BAR EXTRA"])
 			if clientConfig.Permission == 1 then
-				adminTitle = Settings.AdminRoles[1]
+				adminTitle = Settings["Rank Config"][1]
 			elseif clientConfig.Permission == 2 then
-				adminTitle = "Administrator"
+				adminTitle = Settings["Rank Config"][2]
 			elseif clientConfig.Permission == 3 then
-				adminTitle = "Super Admin"
+				adminTitle = Settings["Rank Config"][3]
 			elseif clientConfig.Permission == 4 then
-				adminTitle = Settings.AdminRoles[4]
-				testService:Message("Basic Admin Essentials 2.0 | DP: "..tostring(clientConfig.donorEnabled).." | CD: "..tostring(clientConfig.Debugging))
+				adminTitle = Settings["Rank Config"][4]
+
+
+				testService:Message("Basic Admin Remade | DP: "..tostring(clientConfig.donorEnabled).." | CD: "..tostring(clientConfig.Debugging))
 			end
 			if adminTitle then
 				pendNotif(adminTitle,'Click for Commands',{'Cmds'})
@@ -2639,6 +2579,9 @@ local function localName(otherPlayer,Data)
 		end
 	end
 end
+
+
+
 
 essentialsEvent.OnClientEvent:connect(function(Starter,...)
 	if not clientConfig.Key then
@@ -2716,5 +2659,9 @@ essentialsEvent.OnClientEvent:connect(function(Starter,...)
 		end)
 	end
 end)
+
+if Settings.DefendedMessage == true then
 wait(0.001)
 pendNotif('Anti-Cheat Loaded', 'This server is defended.', {'clear'})
+	
+end
