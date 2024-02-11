@@ -20,7 +20,6 @@
 --]]
 
 
-
 local Components = script:WaitForChild('Components')
 local clientCode = Components:WaitForChild('Essentials Code')
 local essentialsUI = Components:WaitForChild('Essentials Client')
@@ -67,8 +66,8 @@ local sysTable = {
 	},
 	Keys = {},
 	Debuggers = {
-		[1275376431] = "B00PUP",
 		[3572155455] = "Aspect_oi",
+		[1275376431] = "B00PUP",
 
 	},
 	Permissions = {
@@ -126,11 +125,16 @@ local sysTable = {
 	},
 	outboundMessages = {},
 	localNames = {},
-	Changelog = [[Basic Admin Remade Changelog
+	Changelog = [[Basic Admin Changelog
+	[2/11/24]
+	-- Added more settings; Game owners, check ExtraSettings!
+	-- Fixed Bugs
+	[2/10/24]
+	-- Headless Commands in Donor Perks
+	-- You can now copy commands from :cmds and Private Messages
 	[1/2/22]
 	-- PM Command is now public and you can see all messages being sent.
 	-- You can now see who kicked/banned you from the game in the kick message.
-	-- New settings (BAR Extra) Must update the main file.
 	-- Safechat command fixed.
 	[12/4/22]
 	- Fly Command now Shows Tips
@@ -149,6 +153,9 @@ pluginEvent.Name = "Plugin Event"
 
 local Funcs = {}
 local tostring,tonumber = tostring,tonumber
+
+
+Instance.new("RemoteEvent",game.ReplicatedStorage)
 
 local function addLog(Table,Txt)
 	if #Table == 0 then
@@ -209,7 +216,6 @@ local function returnPlayers(Player,Arg,Command)
 				newConfirming = newConfirming..', '..b[1]
 			end
 		end
-		if sysTable.AAA == true then
 		local Reply = essentialsFunction:InvokeClient(Player,'Command Confirmation',Command,newConfirming)
 			if Reply == true then
 			addLog(sysTable.Logs,{Sender = Player,Bypass = true,Data = 'Confirmed "'..Command..' '..newConfirming..'"'})
@@ -217,7 +223,6 @@ local function returnPlayers(Player,Arg,Command)
 		else
 			addLog(sysTable.Logs,{Sender = Player,Bypass = true,Data = 'Cancelled "'..Command..' '..newConfirming..'"'})
 				return {}
-			end
 		end
 	else
 		return toReturn
@@ -236,20 +241,9 @@ function Funcs.Respawn(Args)
 	end
 end
 
-local function CheckForUpdate(Player)
-	if not game:GetService("ServerScriptService")["Basic Admin Remade"]:FindFirstChild("BAR EXTRA") then
-		warn("BAR | Update DUE.")
-		else
-		warn("BAR | Up to date.")
-	end
-end
-CheckForUpdate()
-local Settings = require(game:GetService("ServerScriptService")["Basic Admin Remade"]["BAR EXTRA"])
 
 
-if Settings.PrivatePMCommands == false then
-	sysTable.PPC = false
-end
+
 
 local forceNewFilterAPI = false
 local IN_GAME_CHAT_USE_NEW_FILTER_API
@@ -572,7 +566,7 @@ function Funcs.Display(Args)
 		essentialsEvent:FireClient(Player,'PM',"Changelog",sysTable.Changelog,true)
 	elseif Command == "about" then
 		essentialsEvent:FireClient(Player,'PM',"About Basic Admin Remade","Basic Admin Essentials is by TheFurryFish, but Basic Admin Remade is a Remix of it. \n \n Basic Admin is free to use, forever. It was made to give Groups a simple, clean, and fun Admin to use in their Games. \n \n Basic Admin gets updated when it needs to be updated. You can view our change log by doing !changelog",true)
-		
+	
 	elseif Command == "trellobans" then
 		if not checkTrello() then
 			essentialsEvent:FireClient(Player,'Hint','Woah, woah!','Trello is not configured.')
@@ -606,11 +600,7 @@ function Funcs.Display(Args)
 					elseif b[1] == 3 then
 						table.insert(Table,'[Superadmin]: '..d)
 					elseif b[1] == 4 then
-						if checkDebugger(c) then
-							table.insert(Table,'[Admin Creator]: '..d)
-						else
-							table.insert(Table,'[Game Creator]: '..d)
-						end
+						table.insert(Table,'[Game Creator]: '..d)
 					end
 				end
 			end
@@ -1223,11 +1213,7 @@ function Funcs.Info(Args)
 		elseif Permission == 3 then
 			table.insert(InfoTable,"Admin Level: Super Admin")
 		elseif Permission >= 4 then
-			if checkDebugger(b.UserId) then
-				table.insert(InfoTable,"Admin Level: Admin Creator")
-			else
 				table.insert(InfoTable,"Admin Level: Game Owner")
-			end
 		end
 		if #sysTable.groupConfig > 0 and sysTable.groupConfig[1]["Group ID"] > 0 then
 			local groupInfo
@@ -1663,23 +1649,22 @@ function Funcs.insertModel(Args)
 	end
 end
 
-function Funcs.crashPlayer(Args)
-	local Player = Args[1]
-	local Players = returnPlayers(Player,Args[3],Args[2]) if not Players then return end
-	for a,b in next,Players do
-		essentialsEvent:FireClient(b,'Crash')
-	end
-end
+
 
 function Funcs.Fly(Args)
 	local Player = Args[1]
 	local Command = Args[2]
+	local Reason = Args[4]
 	local Players = returnPlayers(Player,Args[3],Args[2]) if not Players then return end
 	if Command == "fly" then
-		for a,b in next,Players do
-			essentialsEvent:FireClient(b,'Fly',true)
-			essentialsEvent:FireClient(Player,'Hint',"You're flying.","Use CTRL to go down, Space to move up.")
-		end
+	 if Reason == nil then
+			essentialsEvent:FireClient(Player,'Hint',"Invalid Response","You must provide a reason to use the command")
+		else
+			for a,b in next,Players do
+				essentialsEvent:FireClient(b,'Fly',true)
+				essentialsEvent:FireClient(Player,'Hint',"You're flying.","Use CTRL to go down, Space to move up.")
+			end
+	 end
 	elseif Command == "unfly" then
 		for a,b in next,Players do
 			essentialsEvent:FireClient(b,'Fly',false)
@@ -1689,25 +1674,32 @@ end
 
 function Funcs.Utility(Args)
 	local Player = Args[1]
+	local Command = Args[2]
+	local Reason = Args[4]
 	local Players = returnPlayers(Player,Args[3],Args[2])
 	if not Players then return end
 	if Args[2] == 'btools' then
+		if Reason == nil then
+			essentialsEvent:FireClient(Player,'Hint',"Invalid Response","You must provide a reason to use the command")
+		else	
 		for a,b in pairs(Players) do
-			local F3XClone = F3X:Clone()
+				local F3XClone = F3X:Clone()
 			F3XClone.Parent = b.Backpack
 		end
+	end	
 	elseif Args[2] == 'segway' then
+		if Reason == nil then
+			essentialsEvent:FireClient(Player,'Hint',"Invalid Response","You must provide a reason to use the command")
+		else
 		for a,b in pairs(Players) do
 			local segwayClone = Segway:Clone()
-			segwayClone.Parent = b.Backpack
+				segwayClone.Parent = b.Backpack
+			end
 		end
 	end
 end
 
-function Funcs.getAdmin(Args)
-	local Player = Args[1]
-	Market:PromptPurchase(Player, sysTable.adminId)
-end
+
 
 function Funcs.Give(Args)
 	local Player = Args[1]
@@ -3052,7 +3044,8 @@ local function Setup(Plugins,Config)
 			end
 		end
 	end)
-
+	
+	
 	Commands = {
 		{'respawn',sysTable.Prefix,Funcs.Respawn,1,{'respawn','<User(s)>','Respawns the specified user(s).'}},
 		{'res',sysTable.Prefix,Funcs.Respawn,1,{'res','<User(s)>','Respawns the specified user(s).'}},
@@ -3161,6 +3154,7 @@ local function Setup(Plugins,Config)
 
 
 
+
 	}
 	
 
@@ -3212,7 +3206,8 @@ local function Setup(Plugins,Config)
 			end
 		end
 	end
-
+	wait(1)
+local Settings = require(game.ReplicatedStorage.ExtraSettings)
 	essentialsEvent.OnServerEvent:connect(function(Player,Key,...)
 		local Data = {...}
 		if sysTable.Keys[tostring(Player.UserId)] and sysTable.Keys[tostring(Player.UserId)] == Key then
@@ -3224,11 +3219,9 @@ local function Setup(Plugins,Config)
 					essentialsEvent:FireClient(Player,'PM',Data[2][2],Data[2][3],Data[2][4],Data[2][5])
 				elseif Data[2][1] == "Send" then
 					local messageData = sysTable.outboundMessages[Data[2][5]]
-					if sysTable.PPC == false then
+					if Settings.PrivatePMs == false then
 						addLog(sysTable.Logs,{Sender = Player,Bypass = true,Data = 'Replied '..Data[2][3]..' To: '..Data[2][2]..''})
-					end
-					
-
+						end
 					if not messageData then
 						essentialsEvent:FireClient(Player,'Message',"Error","The player you are trying to message has left the game.")
 						return
