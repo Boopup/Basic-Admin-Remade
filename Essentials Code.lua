@@ -99,6 +99,8 @@ local function crashPlayer()
 	end)
 end
 
+
+
 local function integrityCheck(Type)
 	if Type == 1 then
 		if tostring(essentialsEvent.FireServer) ~= oldEvent then
@@ -669,7 +671,7 @@ local function Display(Type,Data)
 		local ScrollConnections = {}
 
 		table.insert(Connections,scrollingFrame.ChildAdded:connect(function(Obj)
-			if Obj:IsA('TextLabel') then
+			if Obj:IsA('TextLabel') or Obj:IsA('TextBox') then
 				local Label = Obj
 				if Label then
 					if not ScrollConnections[Obj] then
@@ -1558,7 +1560,7 @@ local function Display(Type,Data)
 			end
 
 			table.insert(Connections,mainScroll.ChildAdded:connect(function(Obj)
-				if Obj:IsA('TextLabel') then
+				if Obj:IsA('TextLabel') or Obj:IsA('TextBox') then
 					table.insert(Connections,Obj.MouseEnter:connect(function()
 						table.insert(Connections,Obj.MouseMoved:connect(function(X,Y)
 							if Obj.Text == "This ban is a legacy ban." then
@@ -1867,7 +1869,13 @@ local function pendNotif(Title,Desc,Data)
 
 		local receiveSound = Instance.new('Sound',Workspace.CurrentCamera)
 		receiveSound.Name = 'Notification'
-		receiveSound.SoundId = 'rbxassetid://1862048961' -- Want the old one? Replace the ID with 255881176
+		if Settings.NotifySoundID == nil then
+			receiveSound.SoundId = 'rbxassetid://255881176' -- Want the old one? Replace the ID with 255881176
+		elseif Settings.NotifySoundID == false then
+			receiveSound.SoundId = 'rbxassetid://0' -- Want the old one? Replace the ID with 255881176
+		else
+			receiveSound.SoundId = Settings.NotifySoundID -- Want the old one? Replace the ID with 255881176	
+		end
 		receiveSound.Volume = 1
 		receiveSound.Pitch = 1
 		receiveSound.PlayOnRemove = true
@@ -1888,6 +1896,7 @@ local function pendNotif(Title,Desc,Data)
 			exitConnection:Disconnect()
 			if Data[5] then
 				fireServer("Notification Transfer",{"Complete Message",Data[5]})
+
 			end
 			for a,b in pairs(Stacks.Notifs) do
 				if b == notifClone then
@@ -2380,7 +2389,7 @@ local function Console()
 				end
 			end)
 			consoleFrame.Position = UDim2.new(0,0,0,-31)
-			consoleText.Text = 'Enter a command...'
+			consoleText.Text = 'Enter a command, ' ..Player.DisplayName
 			consoleBox.Text = ''
 			consoleFrame.Visible = true
 			consoleBox:CaptureFocus()
@@ -2389,7 +2398,7 @@ local function Console()
 			consoleOpen = false
 			starterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, true)
 			starterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, true)
-			consoleText.Text = 'Enter a command...'
+			consoleText.Text = 'Enter a command, ' ..Player.DisplayName
 			consoleBox.Text = ''
 			consoleBox:ReleaseFocus()
 			consoleFrame:TweenPosition(UDim2.new(0,0,0,-consoleFrame.AbsoluteSize.Y),'Out','Quint',0.3,true)
@@ -2412,7 +2421,8 @@ local function Console()
 					if not Result then return end
 					consoleBox.Text = Result
 					canClose = false
-					consoleBox:ReleaseFocus()
+					--consoleBox:ReleaseFocus()
+					consoleBox.CursorPosition = #consoleBox.Text + 1
 					consoleBox:CaptureFocus()
 					canClose = true
 				elseif consoleBox.Text == "'" then
@@ -2529,6 +2539,8 @@ function essentialsFunction.OnClientInvoke(Starter,...)
 				adminTitle = Settings["Rank Config"][3]
 			elseif clientConfig.Permission == 4 then
 				adminTitle = Settings["Rank Config"][4]
+				
+			
 
 
 				testService:Message("Basic Admin Remade | DP: "..tostring(clientConfig.donorEnabled).." | CD: "..tostring(clientConfig.Debugging))
@@ -2660,8 +2672,8 @@ essentialsEvent.OnClientEvent:connect(function(Starter,...)
 	end
 end)
 
-if Settings.DefendedMessage == true then
-wait(0.001)
-pendNotif('Anti-Cheat Loaded', 'This server is defended.', {'clear'})
+if Settings.DefendedMessage.Enabled == true or Settings.DefendedMessage.Enabled == nil then
+	wait(Settings.DefendedMessage.Delay)
+	pendNotif(Settings.DefendedMessage.Title, Settings.DefendedMessage.Description, {'clear'})
 	
 end
