@@ -15,7 +15,6 @@
 
 	Do not redistribute without proper
 	credits to the actual creators
-	
 
 --]]
 
@@ -48,19 +47,22 @@ local tweenService = game:GetService('TweenService')
 local textService = game:GetService('TextService')
 local groupService = game:GetService('GroupService')
 local soundService = game:GetService("SoundService")
-
+local Settings = require(game.ReplicatedStorage:WaitForChild("ExtraSettings"))
 local getPlayers = require(Components:WaitForChild('Get Players'))
 local timeAndDate = require(Components:WaitForChild('Time and Date'))
 local dataModule = require(Components:WaitForChild('Data Storage'))
 local DataCategory
 local trelloApi = require(Components:WaitForChild('Trello'))
 local loadStringModule = require(Components:WaitForChild('Loadstring'))
+local ExtraSettings = require(game.ReplicatedStorage:WaitForChild("ExtraSettings"))
 
 local F3X = Components:WaitForChild('F3X')
+local Sword = Components:WaitForChild('Sword')
 local Segway = Components:WaitForChild('Handless Segway')
 
+
 local sysTable = {
-	adminVersion = "5.7.4.20.157A."..tostring(game.PlaceVersion),
+	adminVersion = "2.1.3",
 	Cache = {
 		Username = {},
 	},
@@ -125,23 +127,21 @@ local sysTable = {
 	},
 	outboundMessages = {},
 	localNames = {},
+	
 	Changelog = [[Basic Admin Changelog
-	[2/11/24]
-	-- Added more settings; Game owners, check ExtraSettings!
+	
+	[8/12/24]
+	-- Added support to say ':to' and the command will be ran on you (Works on all commands)
+	-- Added :sword command
+	-- Added UITransparency and RequireReason to ExtraSettings [Game Developers, update your ExtraSettings.]
+	-- Updated BTools
 	-- Fixed Bugs
-	[2/10/24]
-	-- Headless Commands in Donor Perks
-	-- You can now copy commands from :cmds and Private Messages
-	[1/2/22]
-	-- PM Command is now public and you can see all messages being sent.
-	-- You can now see who kicked/banned you from the game in the kick message.
-	-- Safechat command fixed.
-	[12/4/22]
-	- Fly Command now Shows Tips
-	- Updated Cape Logo
-	- Updated Bought Donor Perks Message
-	- Added !about Command
-	- Change Changelog Prefix to !changelog
+	[2/12/24]
+	-- Added Display Name Support for commands (eg. :info Boo)
+	-- Added /e Support (eg. /e :m Hello world!)
+	-- Added Display Name to Info Command (We'll add it to more later!)
+	-- Fixed Bugs
+
 ]]
 }
 
@@ -167,6 +167,22 @@ local function addLog(Table,Txt)
 		table.remove(Table,#Table)
 	end
 end
+
+local function checkVersion()
+	local success, result = pcall(function()
+		return httpService:GetAsync("http://boopup.dev/api/bar/version?version=" ..sysTable.adminVersion)
+	end)
+
+	if success then
+		local responseData = httpService:JSONDecode(result)
+		return responseData
+	else
+		addLog(sysTable.debugLogs, "Failed to fetch update information: " .. tostring(result))
+		return false
+	end
+
+end
+
 
 local function returnPermission(Player)
 	local Permission = 0
@@ -217,12 +233,12 @@ local function returnPlayers(Player,Arg,Command)
 			end
 		end
 		local Reply = essentialsFunction:InvokeClient(Player,'Command Confirmation',Command,newConfirming)
-			if Reply == true then
+		if Reply == true then
 			addLog(sysTable.Logs,{Sender = Player,Bypass = true,Data = 'Confirmed "'..Command..' '..newConfirming..'"'})
 			return getPlayers(Player,Arg,returnPermission,false,Command)
 		else
 			addLog(sysTable.Logs,{Sender = Player,Bypass = true,Data = 'Cancelled "'..Command..' '..newConfirming..'"'})
-				return {}
+			return {}
 		end
 	else
 		return toReturn
@@ -566,7 +582,7 @@ function Funcs.Display(Args)
 		essentialsEvent:FireClient(Player,'PM',"Changelog",sysTable.Changelog,true)
 	elseif Command == "about" then
 		essentialsEvent:FireClient(Player,'PM',"About Basic Admin Remade","Basic Admin Essentials is by TheFurryFish, but Basic Admin Remade is a Remix of it. \n \n Basic Admin is free to use, forever. It was made to give Groups a simple, clean, and fun Admin to use in their Games. \n \n Basic Admin gets updated when it needs to be updated. You can view our change log by doing !changelog",true)
-	
+
 	elseif Command == "trellobans" then
 		if not checkTrello() then
 			essentialsEvent:FireClient(Player,'Hint','Woah, woah!','Trello is not configured.')
@@ -642,13 +658,13 @@ function Funcs.Display(Args)
 		end
 	elseif Command == "joinlogs" then
 		essentialsEvent:FireClient(Player,'List','Join Logs',true,true,sysTable.joinLogs)
-			elseif Command == "pbans" then
-			local pbanData = sysTable.dsBanCache
-			local Table = {}
-			if pbanData then
+	elseif Command == "pbans" then
+		local pbanData = sysTable.dsBanCache
+		local Table = {}
+		if pbanData then
 			for a,b in next,pbanData do
-					table.insert(Table,{b[1],b[2],b[3]})
-				end
+				table.insert(Table,{b[1],b[2],b[3]})
+			end
 		end
 		essentialsEvent:FireClient(Player,'List','Permanent Bans',true,true,Table)
 	elseif Command == "shutdownlogs" then
@@ -1184,6 +1200,8 @@ function Funcs.Info(Args)
 	for a,b in pairs(Players) do
 		local InfoTable = {}
 		table.insert(InfoTable,"Username: "..b.Name)
+		table.insert(InfoTable,"Display Name: "..b.DisplayName)
+
 		table.insert(InfoTable,"UserId: "..b.UserId)
 		table.insert(InfoTable,"AccountAge: "..b.AccountAge)
 		local JoinDate = os.date("*t",(os.time()-((b.AccountAge)*24*60*60)))
@@ -1213,7 +1231,7 @@ function Funcs.Info(Args)
 		elseif Permission == 3 then
 			table.insert(InfoTable,"Admin Level: Super Admin")
 		elseif Permission >= 4 then
-				table.insert(InfoTable,"Admin Level: Game Owner")
+			table.insert(InfoTable,"Admin Level: Game Owner")
 		end
 		if #sysTable.groupConfig > 0 and sysTable.groupConfig[1]["Group ID"] > 0 then
 			local groupInfo
@@ -1445,7 +1463,7 @@ function Funcs.permBan(Args)
 					essentialsEvent:FireClient(Player,'Message','Error','An error occurred while trying to "'..Cmd..'"'..'\n'..Msg)
 					return
 				end
-			else
+			elseif ExtraSettings.UseLegacyBan == false then
 				for a,b in next,Players do
 					if returnPerms_ID(b.UserId) < returnPermission(Player) then
 						table.insert(victimTable,{b.UserId,b.Name})
@@ -1482,8 +1500,10 @@ function Funcs.permBan(Args)
 						if not Succ and Msg then
 							essentialsEvent:FireClient(Player,'Message','Error','An error occurred while trying to ban that user.')
 						end
-                        local Reason = Args[4]
-						b:Kick('Basic Admin Remade. \n You have been banned for: '..Reason..' . Please make sure to avoid these actions!\n Moderator: '..Player.Name..'')
+						local Reason = Args[4]
+						game:GetService("Players"):BanAsync({UserIds = {b.UserId},Duration = 0,DisplayReason = reasonString,PrivateReason = "None",ExcludeAltAccounts = true,ApplyToUniverse = true})
+
+						--b:Kick('Basic Admin Remade. \n You have been banned for: '..Reason..' . Please make sure to avoid these actions!\n Moderator: '..Player.Name..'')
 					end
 				end
 			end
@@ -1556,6 +1576,7 @@ function Funcs.permBan(Args)
 				essentialsEvent:FireClient(Player,'Message','Error','An error occurred while trying to "'..Cmd..'"'..'\n'..Msg)
 				return
 			end
+			
 			if Removed then
 				essentialsEvent:FireClient(Player,'Hint',"Un-Permanently Banned",victimId..', '..victimName)
 			else
@@ -1657,14 +1678,10 @@ function Funcs.Fly(Args)
 	local Reason = Args[4]
 	local Players = returnPlayers(Player,Args[3],Args[2]) if not Players then return end
 	if Command == "fly" then
-	 if Reason == nil then
-			essentialsEvent:FireClient(Player,'Hint',"Invalid Response","You must provide a reason to use the command")
-		else
-			for a,b in next,Players do
-				essentialsEvent:FireClient(b,'Fly',true)
-				essentialsEvent:FireClient(Player,'Hint',"You're flying.","Use CTRL to go down, Space to move up.")
-			end
-	 end
+		for a,b in next,Players do
+			essentialsEvent:FireClient(b,'Fly',true)
+			essentialsEvent:FireClient(Player,'Hint',"You're flying.","Use CTRL to go down, Space to move up.")
+		end
 	elseif Command == "unfly" then
 		for a,b in next,Players do
 			essentialsEvent:FireClient(b,'Fly',false)
@@ -1677,23 +1694,33 @@ function Funcs.Utility(Args)
 	local Command = Args[2]
 	local Reason = Args[4]
 	local Players = returnPlayers(Player,Args[3],Args[2])
+
 	if not Players then return end
 	if Args[2] == 'btools' then
-		if Reason == nil then
+		if Reason == nil and Settings.RequireReason == nil or Settings.RequireReason == true then
 			essentialsEvent:FireClient(Player,'Hint',"Invalid Response","You must provide a reason to use the command")
 		else	
-		for a,b in pairs(Players) do
+			for a,b in pairs(Players) do
 				local F3XClone = F3X:Clone()
-			F3XClone.Parent = b.Backpack
-		end
-	end	
+				F3XClone.Parent = b.Backpack
+			end
+		end	
 	elseif Args[2] == 'segway' then
-		if Reason == nil then
+		if Reason == nil and Settings.RequireReason == nil or Settings.RequireReason == true then
 			essentialsEvent:FireClient(Player,'Hint',"Invalid Response","You must provide a reason to use the command")
 		else
-		for a,b in pairs(Players) do
-			local segwayClone = Segway:Clone()
+			for a,b in pairs(Players) do
+				local segwayClone = Segway:Clone()
 				segwayClone.Parent = b.Backpack
+			end
+		end
+	elseif Args[2] == 'sword' then
+		if Reason == nil and Settings.RequireReason == nil or Settings.RequireReason == true then
+			essentialsEvent:FireClient(Player,'Hint',"Invalid Response","You must provide a reason to use the command")
+		else
+			for a,b in pairs(Players) do
+				local swordClone = Sword:Clone()
+				swordClone.Parent = b.Backpack
 			end
 		end
 	end
@@ -2534,6 +2561,9 @@ local function insertPermissions(Player)
 end
 
 local function onChatted(Message, Player, Chatted)
+	if string.find(Message,'/e ') then
+		Message = string.gsub(Message,'/e ','')
+	end
 	local PlayerCommand = Message:gmatch("%w+")()
 	if not PlayerCommand then
 		return
@@ -2713,29 +2743,10 @@ local function managePlayer(Player)
 		pendingPSAs[Player] = {}
 	end
 
-	--	if not pendingPSAs[Player]['logs'] then
-	--		if os.time() < 1524117600 then
-	--			local hasAcknowledged = checkForAcknowledgement(Player,'logs')
-	--			if not hasAcknowledged then
-	--				pendingPSAs[Player]['logs'] = {
-	--					Title = "Announcement regarding Chatlogs and Logs.",
-	--					Info = "Recently, there have been updates to Basic Admin regarding the Chatlog and Log commands. There have been efforts to make this admin more Roblox filter compliant, in accordance to their filtering policies. However, it has come to my attention that, that goal is not exactly attainable at this moment in time due to the lack of API support.\n\nWhat this means for you, is that chatlogs and logs are now functional again."
-	--				}
-	--			end
-	--		end
-	--	end
-
-	if not pendingPSAs[Player]['all'] then
-		if os.time() < 1588305600 then
-			local AcknowledgedPSA = checkForAcknowledgement(Player,'all')
-			if not AcknowledgedPSA then
-				pendingPSAs[Player]['all'] = {
-					Title = "Basic Admin Changelog",
-					Info = sysTable.Changelog
-				}
-			end
-		end
-	end
+	
+			
+		
+	
 
 	if not runService:IsStudio() then
 		local Succ,Msg = pcall(function()
@@ -2927,6 +2938,15 @@ local function Setup(Plugins,Config)
 		local clientClone = clientCode:Clone()
 		clientClone.Parent = starterPlayer.StarterPlayerScripts
 		sysTable.systemColor = Config['System Color'] or sysTable.systemColor
+		SettingsWait = game.ReplicatedStorage:WaitForChild("ExtraSettings")
+		Settings = require(SettingsWait)
+		
+		if Settings.LockedOnStart == nil or Settings.LockedOnStart == true then
+			sysTable.serverLocked = true
+		else 
+			sysTable.serverLocked = false
+		end
+
 		for a,b in next,essentialsUI['Base Clip']:GetChildren() do
 			if b:IsA('Frame') then
 				if b.Name == "Container" and b:FindFirstChild('Template') then
@@ -2942,8 +2962,33 @@ local function Setup(Plugins,Config)
 					b.Top.Controls.Decoration.BackgroundColor3 = sysTable.systemColor
 					b.Top.Controls.Exit.BackgroundColor3 = sysTable.systemColor
 					b.Top.BackgroundColor3 = sysTable.systemColor
+
 				else
 					b.BackgroundColor3 = sysTable.systemColor
+				end
+			end
+
+		end
+		sysTable.systemColor = Settings['UITransparency'] or Settings.UITransparency
+		for a,b in next,essentialsUI['Base Clip']:GetChildren() do
+			if b:IsA('Frame') then
+				if b.Name == "Container" and b:FindFirstChild('Template') then
+					local Inner = b:FindFirstChild('Template'):FindFirstChild('Inner')
+					if Inner then
+						Inner.BackgroundTransparency = Settings.UITransparency
+					end
+				elseif b.Name == "Donor Template" then
+					b.Overlay.BackgroundTransparency = Settings.UITransparency
+					b.BackgroundTransparency = sysTable.systemColor
+				elseif b.Name == "Personal Message Template" then
+					b.Bottom.BackgroundTransparency = Settings.UITransparency
+					b.Top.Controls.Decoration.BackgroundTransparency = Settings.UITransparency
+					b.Top.Controls.Exit.BackgroundTransparency = Settings.UITransparency
+					b.Top.BackgroundTransparency = Settings.UITransparency
+				elseif b.Name == "Direct Messages" then
+					b.BackgroundTransparency = 1
+				else
+					b.BackgroundTransparency = Settings.UITransparency
 				end
 			end
 		end
@@ -3021,6 +3066,8 @@ local function Setup(Plugins,Config)
 			sysTable.Permissions.gameOwners[2][tostring(a)] = b
 		end
 	end
+	
+
 
 	playerService.PlayerAdded:connect(function(Player)
 		if sysTable.shuttingDown then
@@ -3030,6 +3077,20 @@ local function Setup(Plugins,Config)
 		local Status,Normal = managePlayer(Player)
 		if not Normal then
 			addLog(sysTable.debugLogs,Status)
+		end
+		
+		if returnPermission(Player) == 4 then
+			local checkVersion = checkVersion()
+			if tostring(sysTable.adminVersion) < checkVersion.version then
+				essentialsEvent:FireClient(Player,'Hint','Outdated Model','Please update your model to  v'..checkVersion.version..'. Only admins can see this.',{})
+	
+			end
+			wait(10)
+			if checkVersion.announcements.title ~= "" then
+				essentialsEvent:FireClient(Player,'Hint',checkVersion.announcements.title,checkVersion.announcements.message..'. Only admins can see this.',{})
+
+			end
+
 		end
 	end)
 
@@ -3044,8 +3105,8 @@ local function Setup(Plugins,Config)
 			end
 		end
 	end)
-	
-	
+
+
 	Commands = {
 		{'respawn',sysTable.Prefix,Funcs.Respawn,1,{'respawn','<User(s)>','Respawns the specified user(s).'}},
 		{'res',sysTable.Prefix,Funcs.Respawn,1,{'res','<User(s)>','Respawns the specified user(s).'}},
@@ -3092,6 +3153,7 @@ local function Setup(Plugins,Config)
 		{'unpbanid',sysTable.Prefix,Funcs.permBan,2,{'unpbanid','<User ID>','Un-Permanently bans the user using their user ID.'}},
 		{'pbans',sysTable.Prefix,Funcs.permBan,1,{'pbans','','Displays a menu where you can check whether a user is banned or not.'}},
 		{'shutdownlogs',sysTable.Prefix,Funcs.Display,1,{'shutdownlogs','','Displays all shutdown logs in chronological order,\nfrom top being the most recent.'}},
+		{'sword',sysTable.Prefix,Funcs.Utility,3,{'sword','<User(s)>','Gives the specified user(s) a Sword.'}},
 		{'btools',sysTable.Prefix,Funcs.Utility,2,{'btools','<User(s)>','Gives the specified user(s) Building Tools by F3X.'}},
 		{'segway',sysTable.Prefix,Funcs.Utility,4,{'segway','<User(s)>','Gives the specified user(s) a Handless Segway.'}},
 		{'s',sysTable.Prefix,Funcs.doScript,3,{'s','<Code>','Executes specified code.'}},
@@ -3156,7 +3218,7 @@ local function Setup(Plugins,Config)
 
 
 	}
-	
+
 
 	for _,Command in next,Commands do
 		local CommandName = Command[1]
@@ -3207,7 +3269,6 @@ local function Setup(Plugins,Config)
 		end
 	end
 	wait(1)
-local Settings = require(game.ReplicatedStorage.ExtraSettings)
 	essentialsEvent.OnServerEvent:connect(function(Player,Key,...)
 		local Data = {...}
 		if sysTable.Keys[tostring(Player.UserId)] and sysTable.Keys[tostring(Player.UserId)] == Key then
@@ -3221,7 +3282,7 @@ local Settings = require(game.ReplicatedStorage.ExtraSettings)
 					local messageData = sysTable.outboundMessages[Data[2][5]]
 					if Settings.PrivatePMs == false then
 						addLog(sysTable.Logs,{Sender = Player,Bypass = true,Data = 'Replied '..Data[2][3]..' To: '..Data[2][2]..''})
-						end
+					end
 					if not messageData then
 						essentialsEvent:FireClient(Player,'Message',"Error","The player you are trying to message has left the game.")
 						return
@@ -3853,6 +3914,7 @@ local Settings = require(game.ReplicatedStorage.ExtraSettings)
 		end
 	end)
 
+
 	game:BindToClose(function()
 		if sysTable.shuttingDown and sysTable.shuttingDown ~= {} then
 			pcall(function()
@@ -3878,5 +3940,6 @@ local Settings = require(game.ReplicatedStorage.ExtraSettings)
 		end
 	end)
 end
+
 
 return Setup
