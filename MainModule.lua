@@ -215,7 +215,6 @@ local function checkDebugger(ID)
 	return false
 end
 
-
 local Commands
 local CommandsDictionary = {}
 local essentialsFolder
