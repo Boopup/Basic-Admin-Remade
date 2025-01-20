@@ -1,18 +1,10 @@
-Basic Admin Remade © 2024 by B00PUP & Aspect_oi (Roblox Usernames) is licensed under Creative Commons Attribution-NonCommercial 4.0 International. This means:
+**Basic Admin Remade**, owned by B00PUP [boo@boopup.dev] & Aspect_oi is licensed under the following terms:
 
-## You are allowed to:
-- **Share**: copy and redistribute the material in any medium or format
-- **Adapt**: remix, transform, and build upon the material
-The licensor cannot revoke these freedoms as long as you follow the license terms.
-
-## Under the following terms:
-- **Attribution**: You must give [appropriate credit](https://creativecommons.org/licenses/by-nc/4.0/deed.en#ref-appropriate-credit), provide a link to the license, and [indicate if changes were made](https://creativecommons.org/licenses/by-nc/4.0/deed.en#ref-indicate-changes). You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
-- **NonCommercial**: You may not use the material for [commercial purposes](https://creativecommons.org/licenses/by-nc/4.0/deed.en#ref-commercial-purposes).
-**No additional restrictions** - You may not apply legal terms or [technological measures](https://creativecommons.org/licenses/by-nc/4.0/deed.en#ref-technological-measures) that legally restrict others from doing anything the license permits.
-
-## Notices
-You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable [exception or limitation](https://creativecommons.org/licenses/by-nc/4.0/deed.en#ref-exception-or-limitation).
-
-No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as [publicity, privacy, or moral rights](https://creativecommons.org/licenses/by-nc/4.0/deed.en#ref-publicity-privacy-or-moral-rights) may limit how you use the material.
---- 
-You can view the license at https://creativecommons.org/licenses/by-nc/4.0/deed.en to learn more about this license.
+1. You may use, modify, and distribute this software, but you may not sell it or use it for commercial purposes without explicit permission from the author.
+2. You may not modify this software in a way that enables commercial use or money-making (e.g., using it in a paid product or service).
+3. You may not resell the software or any modified version of it.
+4. The software must not be used for malicious or harmful purposes.
+5. If you distribute the software or modified versions of it, you must include this same license and give proper attribution.
+6. You may only distribute this software or its modifications within small groups (e.g., friends, family, or private communities) and may not distribute it publicly or to larger groups (e.g., public forums, open repositories, large-scale communities).
+7. You may make modifications to the software, but you may not modify or alter any money-making methods or funding mechanisms related to this project, including but not limited to donor perks tied to this project, without explicit permission from the authors. This is to prevent changes to any intended financial structures of the project (e.g., subscription services, donations, or paid benefits for supporters).
+8. The authors [B00PUP & Aspect_oi] may make modifications to this license at any time, without warning. 
