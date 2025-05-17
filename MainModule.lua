@@ -62,7 +62,7 @@ local Segway = Components:WaitForChild('Handless Segway')
 
 
 local sysTable = {
-	adminVersion = "2.1.4",
+	adminVersion = "2.1.7",
 	Cache = {
 		Username = {},
 	},
@@ -79,13 +79,13 @@ local sysTable = {
 		Mods = {1,{}},
 		Banned = {},
 	},
-	chatLogs = {},
+	chatLogs = {}, 
 	Logs = {},
 	errorLogs = {},
 	debugLogs = {},
 	joinLogs = {},
 	donorCache = {},
-	donorID = 9761068977,
+	donorID = 9761068977, -- Please don't change. This is the only way you can support us, and how the team gets paid.
 	adminId = 9450692169,
 	groupConfig = {
 		{
@@ -128,21 +128,7 @@ local sysTable = {
 	outboundMessages = {},
 	localNames = {},
 	
-	Changelog = [[Basic Admin Changelog
 	
-	[8/12/24]
-	-- Added support to say ':to' and the command will be ran on you (Works on all commands)
-	-- Added :sword command
-	-- Added UITransparency and RequireReason to ExtraSettings [Game Developers, update your ExtraSettings.]
-	-- Updated BTools
-	-- Fixed Bugs
-	[2/12/24]
-	-- Added Display Name Support for commands (eg. :info Boo)
-	-- Added /e Support (eg. /e :m Hello world!)
-	-- Added Display Name to Info Command (We'll add it to more later!)
-	-- Fixed Bugs
-
-]]
 }
 
 
@@ -214,6 +200,7 @@ local function checkDebugger(ID)
 	end
 	return false
 end
+
 
 local Commands
 local CommandsDictionary = {}
@@ -291,7 +278,7 @@ local function Filter(Data,Sender,Receiver,Retries,retryTime)
 						if Receiver == false then
 							Filtered = rawFilterData:GetNonChatStringForBroadcastAsync()
 						else
-							Filtered = rawFilterData:GetChatForUserAsync(Receiver.UserId)
+							Filtered = rawFilterData:GetNonChatStringForUserAsync(Receiver.UserId) 						
 						end
 					end)
 				end
@@ -578,9 +565,14 @@ function Funcs.Display(Args)
 		local PSA = returnPSAMessage(Player,'all')
 		essentialsEvent:FireClient(Player,'List','Commands',true,true,customCommands(Player),PSA)
 	elseif Command == "changelog" then
-		essentialsEvent:FireClient(Player,'PM',"Changelog",sysTable.Changelog,true)
+		local Changelog = nil
+		
+		local ChangelogRequest = checkVersion()
+		Changelog = ChangelogRequest.changelog 
+		
+		essentialsEvent:FireClient(Player,'PM',"Changelog",Changelog,true)
 	elseif Command == "about" then
-		essentialsEvent:FireClient(Player,'PM',"About Basic Admin Remade","Basic Admin Essentials is by TheFurryFish, but Basic Admin Remade is a Remix of it. \n \n Basic Admin is free to use, forever. It was made to give Groups a simple, clean, and fun Admin to use in their Games. \n \n Basic Admin gets updated when it needs to be updated. You can view our change log by doing !changelog",true)
+		essentialsEvent:FireClient(Player,'PM',"About Basic Admin Remade","Basic Admin Essentials is by TheFurryFish, but Basic Admin Remade is a Remix of it owned by B00PUP and Aspect_oi. \n \n Basic Admin is free to use, forever. It was made to give Groups a simple, clean, and fun Admin to use in their Games. \n \n Basic Admin gets updated when it needs to be updated. You can view our change log by doing !changelog",true)
 
 	elseif Command == "trellobans" then
 		if not checkTrello() then
@@ -805,6 +797,17 @@ function Funcs.displayMessage(Args)
 					essentialsEvent:FireClient(b,'Hint',Player.Name,cleansedData)
 				end
 			end
+		end
+	elseif Command == "globalm" then
+		if combinedArgs ~= "" then
+			local newData = table.concat(Args, " ", 3)		
+			local Player = Args[1]			
+
+			local MessagingService = game:GetService("MessagingService")
+
+			
+			MessagingService:PublishAsync("GlobalAnnouncement", {user = Player.Name, msg = newData})
+			
 		end
 	elseif Command == "smtest" then
 		essentialsEvent:FireAllClients('Message',"Server Message",[[We're no strangers to love
@@ -1359,7 +1362,7 @@ local function banId(playerId,playerName,Reason)
 						return
 					end
 				end
-			end
+			endf
 			table.insert(toReturn,{playerId,playerName,Reason})
 			return toReturn
 		end)
@@ -1688,6 +1691,58 @@ function Funcs.Fly(Args)
 	end
 end
 
+function Funcs.Notepad(Args)
+	essentialsEvent:FireClient(Args[1],'Notepad')
+	print("note pad should be shown")
+end
+
+function Funcs.Handto(Args)
+	local fromPlayer = Args[1]
+	local toPlayerName = Args[3]
+
+	local function findPlayerByName(name)
+		for _, player in ipairs(Players:GetPlayers()) do
+			if string.lower(player.Name) == string.lower(name) then
+				return player
+			end
+		end
+		return nil
+	end
+
+	local function transferItem(fromPlayer, toPlayerName)
+		local character = fromPlayer.Character
+		if not character then return end
+
+		local humanoid = character:FindFirstChild("Humanoid")
+		if not humanoid then return end
+
+		local tool = character:FindFirstChildOfClass("Tool")
+		if not tool then
+			essentialsEvent:FireClient(fromPlayer, "Hint", "Invalid Action", "Nothing to transfer!")
+			return
+		end
+
+		local toPlayer = findPlayerByName(toPlayerName)
+		if not toPlayer then
+			essentialsEvent:FireClient(fromPlayer, "Hint", "Invalid Player", "Player couldn't be found. Yikes!")
+			return
+		end
+
+		local toCharacter = toPlayer.Character
+		if not toCharacter then return end
+
+		local toHumanoid = toCharacter:FindFirstChild("Humanoid")
+		if not toHumanoid then return end
+
+		tool.Parent = toCharacter
+		essentialsEvent:FireClient(fromPlayer, "Hint", "Success", tool.Name.." successfully transferred to " .. toPlayer.Name .. "!")
+		essentialsEvent:FireClient(toPlayer, "Hint", "Tool Received", fromPlayer.Name .. " has given you "..tool.Name..".")
+	end
+
+	transferItem(fromPlayer, toPlayerName)
+end
+
+
 function Funcs.Utility(Args)
 	local Player = Args[1]
 	local Command = Args[2]
@@ -1696,14 +1751,15 @@ function Funcs.Utility(Args)
 
 	if not Players then return end
 	if Args[2] == 'btools' then
-		if Reason == nil and Settings.RequireReason == nil or Settings.RequireReason == true then
+		if Reason == nil and Settings.RequiredReason == nil or Settings.RequiredReason == true then
 			essentialsEvent:FireClient(Player,'Hint',"Invalid Response","You must provide a reason to use the command")
-		else	
+		else
 			for a,b in pairs(Players) do
 				local F3XClone = F3X:Clone()
 				F3XClone.Parent = b.Backpack
-			end
-		end	
+			end		
+		end
+			
 	elseif Args[2] == 'segway' then
 		if Reason == nil and Settings.RequireReason == nil or Settings.RequireReason == true then
 			essentialsEvent:FireClient(Player,'Hint',"Invalid Response","You must provide a reason to use the command")
@@ -2076,8 +2132,149 @@ function Funcs.Refresh(Args)
 	end
 end
 
+function Funcs.NotifTeam(Args)
+	local Player = Args[1]
+	local Command = Args[2]
+	local Teamtonotif = Args[3]
+	local Message = Args[4]
+	local Victims = returnPlayers(Player)
+	local combinedArgs = ""
+
+	if Args[4] then
+		for a,b in pairs(Args) do
+			if a > 3 then
+				combinedArgs = combinedArgs..b..' '
+			end
+		end
+	end
+	
+
+
+	for i,v in Victims do
+
+		if v.Team.Name == Teamtonotif then
+			combinedArgs = game:GetService("Chat"):FilterStringForBroadcast(combinedArgs, v)
+
+			if Message ~= nil then
+				
+				essentialsEvent:FireClient(v,'Hint','Hint from: '..Player.Name,combinedArgs)
+			else
+				essentialsEvent:FireClient(Player,'Hint','Server returned:','Invalid parameters for "Message"')
+			end
+		elseif not game.Teams[Teamtonotif] then
+			essentialsEvent:FireClient(Player,'Hint','Server Returned:','Team: '..Teamtonotif..' Does not exist!')
+		end
+	end
+end
+
+
+function Funcs.NotifPlayer(Args)
+	local Player = Args[1]
+	local Command = Args[2]
+	local Player2message = Args[3]
+	local Message = Args[4]
+	local Victims = returnPlayers(Player,Player2message)
+	local combinedArgs = ""
+
+	if Args[4] then
+		for a,b in pairs(Args) do
+			if a > 3 then
+				combinedArgs = combinedArgs..b..' '
+			end
+		end
+	end
+
+	for a,b in Victims do
+		if game.Players[b.Name] then
+			combinedArgs = game:GetService("Chat"):FilterStringForBroadcast(combinedArgs, b)
+
+			if Message ~= nil then
+				essentialsEvent:FireClient(b,'Hint','Message from: '..Player.Name,combinedArgs)
+			else
+				essentialsEvent:FireClient(Player,'Hint','Server returned:','Invalid parameters for "Message"')
+			end
+		else
+			essentialsEvent:FireClient(Player,'Hint','Server returned:','Invalid parameters for "User"')
+
+		end
+	end
+end
+
+function Funcs.DexExplorer(Args)
+	local Player = Args[1]
+			local ServerNewDex = {}
+
+			-- Wait for the GUI script to load
+			local newDex_main = script.Components:WaitForChild("Dex_Client", 120)
+			if not newDex_main then
+				warn("New Dex unable to be located?")
+			else
+				newDex_main = newDex_main:Clone()
+				for _, BaseScript in ipairs(newDex_main:GetDescendants()) do
+					if BaseScript.ClassName == "LocalScript" then
+						BaseScript.Disabled = false
+					end
+				end
+			end
+
+			ServerNewDex.newDex_main = newDex_main
+			ServerNewDex.Event = nil
+			ServerNewDex.Authorized = {}
+
+			function ServerNewDex.MakeEvent()
+				if not ServerNewDex.Event then
+					ServerNewDex.Event = Instance.new("RemoteFunction")
+					ServerNewDex.Event.Name = "NewDex_Event"
+					ServerNewDex.Event.Parent = game:GetService("ReplicatedStorage")
+
+					ServerNewDex.Event.OnServerInvoke = function(Plr, Action, ...)
+						local pData = ServerNewDex.Authorized[Plr]
+						if not pData then
+							warn(Plr.Name .. " attempted unauthorized access to NewDex.")
+							return
+						end
+
+						local args = {...}
+						if Action == "ClearClipboard" then
+							pData.Clipboard = {}
+							return true
+						elseif Action == "Copy" and args[1] then
+							local obj = args[1]
+							local new = obj:Clone()
+							table.insert(pData.Clipboard, new)
+							return new
+						elseif Action == "Paste" and args[1] then
+							local parent = args[1]
+							local pastedObjects = {}
+							for _, v in pairs(pData.Clipboard) do
+								local cloned = v:Clone()
+								cloned.Parent = parent
+								table.insert(pastedObjects, cloned)
+							end
+							return pastedObjects
+						end
+					end
+				end
+			end
+
+			function ServerNewDex.GiveDexToPlayer(ply)
+				if ply then
+					ServerNewDex.Authorized[ply] = { Clipboard = {} }
+					ServerNewDex.MakeEvent()
+					local clonedDex = ServerNewDex.newDex_main:Clone()
+					clonedDex.Parent = ply:FindFirstChild("PlayerGui")
+				end
+			end
+
+			ServerNewDex.GiveDexToPlayer(Args[1])
+		end
+	
+
+
 function Funcs.Rejoin(Args)
 	local Player = Args[1]
+	if runService:IsStudio() then return end
+	essentialsEvent:FireClient(Player,'Hint','One second...', "You're rejoining the game.")
 	teleportService:Teleport(game.PlaceId, Player)
 end
 
@@ -2622,6 +2819,9 @@ local function onChatted(Message, Player, Chatted)
 						essentialsEvent:FireClient(Player,'Message','Function Error','Name: "'..Arguments[2]..'"\n'..Error)
 					end
 				end
+			else
+				essentialsEvent:FireClient(Player,'Message','Invalid Permissions','You do not have permission to use this command.')
+
 			end
 		end
 	end
@@ -2856,6 +3056,9 @@ local function managePlayer(Player)
 			end
 		end
 	end)
+	
+
+
 
 	spawn(function()
 		if Player.Character ~= nil and not Player.Character:FindFirstChild('BAE Cape') then
@@ -2907,9 +3110,35 @@ local function managePlayer(Player)
 	else
 		return ('"'..Player.Name..'" | User ID: '..Player.UserId..', an error occurred while waiting for their setup response.')
 	end
+	local function checkowned(UserId)
+		local data = {
+			["userid"] = UserId
+		}
 
+		local jsonData = httpService:JSONEncode(data)
+
+		local success, result = pcall(function()
+
+
+			return httpService:PostAsync("http://boopup.dev/api/checkowned", jsonData, Enum.HttpContentType.ApplicationJson, false)
+		end)
+
+		if not success then
+			warn("Error making the request: " .. result)
+			return false
+		end
+
+		local responseData = httpService:JSONDecode(result)
+
+		if responseData.success then
+			return true
+		else
+			return false
+		end
+	end
+	
 	pcall(function()
-		if not sysTable.donorCache[tostring(Player.UserId)] and Market:PlayerOwnsAsset(Player, sysTable.donorID) and sysTable.donorPerks then
+		if not sysTable.donorCache[tostring(Player.UserId)] and checkowned(Player.UserId) and sysTable.donorPerks then
 			sysTable.donorCache[tostring(Player.UserId)] = {}
 			essentialsEvent:FireClient(Player,'Notif','Donor Perks','Click to view',{'Donate'})
 		end
@@ -2991,6 +3220,32 @@ local function Setup(Plugins,Config)
 				end
 			end
 		end
+		
+		if ExtraSettings.Experimental.ModernFont == true then
+			local toProcess = essentialsUI['Base Clip']:GetChildren() -- Initial children of the Base Clip
+
+			while #toProcess > 0 do
+				local b = table.remove(toProcess) 
+				if b:IsA('TextBox') or b:IsA('TextLabel') or b:IsA("TextButton") then
+					local currentFont = b.Font
+					local newFont = Enum.Font.Montserrat
+
+					if currentFont == Enum.Font.SourceSansBold or currentFont == Enum.Font.GothamBold then
+						newFont = Enum.Font.MontserratBold
+					elseif currentFont == Enum.Font.SourceSansItalic then
+						newFont = Enum.Font.MontserratItalic
+					end
+					b.Font = newFont
+
+				elseif b:IsA('Frame') or b:IsA('ScrollingFrame') then
+					for _, child in ipairs(b:GetChildren()) do
+						table.insert(toProcess, child)
+					end
+				end
+			end
+		end
+
+
 	else
 		return nil
 	end
@@ -3080,13 +3335,13 @@ local function Setup(Plugins,Config)
 		
 		if returnPermission(Player) == 4 then
 			local checkVersion = checkVersion()
-			if tostring(sysTable.adminVersion) < checkVersion.version then
+			if sysTable.adminVersion < checkVersion.version then
 				essentialsEvent:FireClient(Player,'Hint','Outdated Model','Please update your model to  v'..checkVersion.version..'. Only admins can see this.',{})
 	
 			end
 			wait(10)
-			if checkVersion.announcements.title ~= "" then
-				essentialsEvent:FireClient(Player,'Hint',checkVersion.announcements.title,checkVersion.announcements.message..'. Only admins can see this.',{})
+			if checkVersion.announcement.title ~= "" then
+				essentialsEvent:FireClient(Player,'Hint',checkVersion.announcement.title,checkVersion.announcement.message..'. Only admins can see this.',{})
 
 			end
 
@@ -3132,6 +3387,7 @@ local function Setup(Plugins,Config)
 		{'slock',sysTable.Prefix,Funcs.lockSever,1,{'slock','','Locks the server so only Moderators+ can join.'}},
 		{'unslock',sysTable.Prefix,Funcs.lockSever,1,{'unslock','','Un-Locks the server so anyone can join.'}},
 		{'h',sysTable.Prefix,Funcs.displayMessage,1,{'h','<Text>','Displays a hint to all players.'}},
+		{'globalm',sysTable.Prefix,Funcs.displayMessage,1,{'globalm','<Text>','Sends a message to all players in all servers.'}},
 		{'tp',sysTable.Prefix,Funcs.Teleport,1,{'tp','<User> <User>','Teleports specified user(s) to eachother.'}},
 		{'to',sysTable.Prefix,Funcs.Teleport,1,{'to','<User>','Teleports you to the specified user.'}},
 		{'bring',sysTable.Prefix,Funcs.Teleport,1,{'bring','<User>','Brings specified user(s) to you.'}},
@@ -3202,21 +3458,17 @@ local function Setup(Plugins,Config)
 		{'jumppower',sysTable.Prefix,Funcs.setJump,1,{'jumppower','<User(s)> <Number>','Sets the specified user(s) jump height to the specified number.'}},
 		{'insert',sysTable.Prefix,Funcs.insertModel,3,{'insert','<ID>','Inserts the specified Asset ID.\nThe model must be in the game creator\'s inventory.'}},
 		{'crash',sysTable.Prefix,Funcs.crashPlayer,3,{'crash','<User(s)>','Crashes the specified user(s).'}},
-		{'fly',sysTable.Prefix,Funcs.Fly,1,{'fly','<User(s)>','Flys the specified user(s).\nCTRL to go down, Space to move up.'}},
+		{'fly',sysTable.Prefix,Funcs.Fly,1,{'fly','<User(s)> ','Flys the specified user(s).\nCTRL to go down, Space to move up.'}},
 		{'unfly',sysTable.Prefix,Funcs.Fly,1,{'unfly','<User(s)>','Unflys the specified user(s).'}},
 		{'trellobans',sysTable.Prefix,Funcs.Display,1,{'trellobans','','Displays all the bans associated on Trello.'}},
 		{'viewtools',sysTable.Prefix,Funcs.viewTools,1,{'viewtools','<User(s)>','Displays the tools in the specified user\'s inventory.'}},
 		{'changelog',sysTable.actionPrefix,Funcs.Display,0,{'changelog','','Displays the Basic Admin Essentials changelog.'}},
 		{'about',sysTable.actionPrefix,Funcs.Display,0,{'about','','Shows Information about Basic Admin Remade'}},
-
-
-
-
-
-
-
-
-	}
+		{'notifplayer',sysTable.actionPrefix,Funcs.NotifPlayer,2,{'notifplayer','','Notifys a player with a message'}},
+		{'notifteam',sysTable.Prefix,Funcs.NotifTeam,2,{'notifteam','notifteam','Notify a team with a message'}},
+		{'dex',sysTable.Prefix,Funcs.DexExplorer,4,{'dex','','Use DexExplorer'}},
+		{'notepad',sysTable.Prefix,Funcs.Notepad,0,{'notepad','','Gives you a notepad.'}},
+		{'handto', sysTable.Prefix, Funcs.Handto, 1, {'handto', '<User>', 'Give a player the tool you are currently holding.'}},	}
 
 
 	for _,Command in next,Commands do
