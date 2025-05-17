@@ -1,0 +1,16 @@
+wait(40)
+local RemoteEvent = game.ReplicatedStorage["Basic Admin Essentials"]["Essentials Event"]
+local Settings = require(game.ReplicatedStorage["ExtraSettings"])
+
+function chooseNotif()
+	local number = math.random(1,#Settings.TimedNotifications)
+	local notification = Settings.TimedNotifications[number]
+	RemoteEvent:FireAllClients('Hint','System Notification',notification)
+	wait(Settings.TimedNotifications.WaitTime)
+	chooseNotif()
+end
+
+if Settings.TimedNotificationsEnabled == true then	
+	chooseNotif()
+end
+
