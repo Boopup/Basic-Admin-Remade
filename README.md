@@ -21,3 +21,7 @@ All in one system, open source project, free forever, and best of all… updated
 Ready to make your game awesome? :thinking:
 
 Download it at https://boopup.dev/BARDownload or https://github.com/Boopup/Basic-Admin-Remade/releases
+
+> Want to support me?
+Join my ro-tech group Discord server for even more free products.
+https://discord.gg/kMDQXANppm
