@@ -8,6 +8,9 @@
 
 local http = game:service("HttpService")
 
+---Checks if HTTP requests are enabled by attempting a GET request to Trello.
+---@return boolean True if HTTP requests are enabled; false otherwise.
+---@return string? Error message if HTTP is not enabled.
 function checkHttp()
 	local y,n = pcall(function()
 		local get = http:GetAsync('http://trello.com')
@@ -19,30 +22,54 @@ function checkHttp()
 	end
 end
 
+---Decodes a JSON string into a Lua table.
+---@param str string The JSON string to decode.
+---@return table The resulting Lua table.
 function decode(str)
 	return http:JSONDecode(str)
 end
 
+---Encodes a Lua value into a JSON string using HttpService.
+---@param value any The Lua value or table to encode as JSON.
+---@return string The resulting JSON string.
 function encode(str)
 	return http:JSONEncode(str)
 end
 
+---Encodes a string for safe inclusion in a URL.
+---@param str string The string to be URL-encoded.
+---@return string The URL-encoded representation of the input string.
 function urlEncode(str)
 	return http:UrlEncode(str)
 end
 
+---Performs an HTTP GET request to the specified URL and returns the response body.
+---@param url string The URL to send the GET request to.
+---@return string The response body as a string.
 function httpGet(url)
 	return http:GetAsync(url,true)
 end
 
+---Sends an HTTP POST request to the specified URL with the given data and content type.
+---@param url string The target URL for the POST request.
+---@param data string The data to send in the request body.
+---@param type string The content type of the request (e.g., "application/json").
+---@return string The response body from the server.
 function httpPost(url,data,type)
 	return http:PostAsync(url,data,type)
 end
 
+---Removes leading and trailing whitespace from a string.
+---@param str string The input string to trim.
+---@return string The trimmed string with no leading or trailing whitespace.
 function trim(str)
 	return str:match("^%s*(.-)%s*$")
 end
 
+---Returns the first object from a list whose `name` field matches the given name after trimming whitespace.
+---@param list table List of objects to search.
+---@param name string Name to match against each object's `name` field.
+---@return table|nil The matching object if found, or nil if no match exists.
 function getListObj(list,name)
 	for i,v in pairs(list) do
 		if trim(v.name)==trim(name) then
@@ -51,6 +78,13 @@ function getListObj(list,name)
 	end
 end
 
+---Initializes and returns an API object for interacting with the Trello service.
+---@param appKey string Trello API application key.
+---@param token string Trello API token.
+---@return table|boolean api The API object with methods for Trello operations, or false and an error message if HTTP is unavailable.
+---@return string? error Error message if initialization fails.
+---@details
+---Creates an API object with methods for retrieving and managing Trello boards, lists, cards, comments, and labels. The returned object provides utility functions for HTTP requests, JSON handling, and URL encoding, as well as higher-level Trello API operations such as creating cards and lists, posting comments, and fetching specific fields. Returns `false` and an error message if HTTP requests are not enabled.
 function Trello(appKey, token)
 	local Status,Message = checkHttp()
 	if not Status then

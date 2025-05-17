@@ -12,6 +12,8 @@ if not currentMusic then
 end
 
 
+---Plays a random valid music track from the configured list and continues playback indefinitely.
+---@details Filters out sound IDs with zero audio length, selects a random valid track, plays it, notifies all clients of the current track, and recursively continues playback after each track ends. If no valid tracks remain, playback stops.
 local function playMusic()
 	local soundIDs = Settings.MusicSystem.SoundIDs
 	if #soundIDs == 0 then return end  

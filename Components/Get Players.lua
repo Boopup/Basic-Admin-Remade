@@ -9,6 +9,11 @@ local filteredArgs = {
 	['admins'] = {'ban','pban','kick','crash'},
 }
 
+---Determines if a given argument and command combination requires confirmation.
+---@param Arg string The argument category to check (e.g., 'all', 'others').
+---@param commandConfirmation boolean Whether command confirmation is enabled.
+---@param Command string The command name to check.
+---@return boolean True if confirmation is required for the argument-command pair; otherwise, false.
 local function Filter(Arg, commandConfirmation, Command)
 	if not commandConfirmation then
 		return false
@@ -23,6 +28,15 @@ local function Filter(Arg, commandConfirmation, Command)
 	return false
 end
 
+---Parses player selection arguments and returns a list of targeted players or a confirmation request.
+---@param Player Player The player issuing the command.
+---@param Arguments string|nil Comma-separated string specifying target players or selection keywords.
+---@param getPermissions fun(player: Player): number Function to retrieve a player's permission level.
+---@param commandConfirmation any Value indicating if command confirmation is required.
+---@param Command string The command being executed.
+---@return table|boolean|string Returns a table of matched players, `false` if no players matched, or `"Confirm"` and a confirmation list if confirmation is required.
+---@desc
+---Supports selection keywords such as "me", "all", "others", "random", "admins", "nonadmins", and team selectors prefixed with `%`. Also matches players by name or display name prefix (if enabled). If no arguments are provided, defaults to the issuing player. If confirmation is required for any argument-command pair, returns `"Confirm"` and the relevant confirmation data.
 local function getPlayers(Player, Arguments, getPermissions, commandConfirmation, Command)
 	local toReturn = {}
 	local toConfirm = {}
