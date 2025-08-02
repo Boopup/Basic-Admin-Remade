@@ -15,4 +15,4 @@ jobs:
         with:
           title: ${{ github.event.client_payload.title }}
           body: ${{ github.event.client_payload.body }}
-          filename: .github/bug_report.md 
+          filename: .github/issue-templates/discord-issue.md
