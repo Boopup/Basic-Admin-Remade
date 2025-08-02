@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Create GitHub Issue
-        uses: peter-evans/create-issue@v4
+        uses: peter-evans/create-issue@latest
         with:
           title: ${{ github.event.client_payload.title }}
           body: ${{ github.event.client_payload.body }}
