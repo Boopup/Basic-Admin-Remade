@@ -15,4 +15,4 @@ jobs:
         with:
           title: ${{ github.event.client_payload.title }}
           body: ${{ github.event.client_payload.body }}
-          filename: https://github.com/Boopup/Basic-Admin-Remade/blob/main/.github/ISSUE_TEMPLATE/bug_report.md 
+          filename: .github/ISSUE_TEMPLATE/bug_report.md 
