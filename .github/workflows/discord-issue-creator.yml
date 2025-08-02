@@ -1,4 +1,4 @@
-name: discord issue creator 
+name: discord issue creator
 
 on:
   repository_dispatch:
@@ -7,10 +7,11 @@ on:
 jobs:
   create-issue:
     runs-on: ubuntu-latest
-
     steps:
       - name: Create GitHub Issue
-        uses: peter-evans/create-issue@latest
+        uses: JasonEtco/create-an-issue@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.APP_PRIVATE_KEY }}
         with:
           title: ${{ github.event.client_payload.title }}
           body: ${{ github.event.client_payload.body }}
