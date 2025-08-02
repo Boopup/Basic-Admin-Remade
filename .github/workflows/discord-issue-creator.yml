@@ -1,4 +1,4 @@
-name: discord issue creator thingy
+name: discord issue creator 
 
 on:
   repository_dispatch:
